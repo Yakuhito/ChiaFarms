@@ -5,6 +5,10 @@
 ; Unlike PLANTs, SEEDs cannot be melted - they can only be converted to BUCKs
 ; Also, 31337 SEEDs can be minted by the project author out of thin air to get the game started (single issuance)
 
+; note: this is one of the exceptional cases where passing in a coing id (buck_parent_id) w/0 doing any verification and then asserting some announcements is safe
+; in a worst-case scenario, a malicious individual could melt seeds
+; since BUCKs are also meltable, there's no point in securing this parameter
+
 (mod (
       GENESIS_COIN_ID ; used to mint the initial SEEDs
       FARM_MOD_HASH
@@ -15,7 +19,7 @@
       lineage_proof
       delta
       inner_conditions
-      (farm_launcher_id seeds_delta)
+      (farm_launcher_id buck_parent_id)
     )
 
     (include farm_puzzle_hash.clib)
@@ -74,10 +78,6 @@
         )
     )
 
-    (defun-inline get_buck_coin_id ()
-        (x) ; --------------- TODO --------------------
-    )
-
     ; main
     (if (= delta ()) ; 
         (if (> seeds_delta ())
@@ -93,7 +93,7 @@
     ; else
         (if (= seeds_delta ())
             (if (> () delta) ; delta < 0
-                (bucks_burn_conditions delta (get_buck_coin_id aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa))
+                (bucks_burn_conditions delta buck_parent_id)
             ; else
                 (x)
             )
