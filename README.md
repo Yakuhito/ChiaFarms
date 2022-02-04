@@ -38,6 +38,13 @@ ChiaFarms is a simple play-to-earn game designed to be fun to play while helping
 
 Farms are Singletons and have owners. BUCKs and SEEDs are both CATs and can be traded freely between players.
 
+Interesting things that happen in the code:
+ - `farm.clsp` holds an ownable puzzle that only updates according to some rules
+ - `farm_state.clib` contains all the methods that have to do with the `state` object which defines a farm.
+ - announcements use a special 'code' to communicate. For each message, there's a string defined in `announements.clib`. An announcement also contains the amount of tokens that need to be minted/burned and, if the target is a TAIL, a coin id.
+ - for each mint/burn action, both puzzles generate an announcement and assert another one. This was inspired from `p2_singleton`.
+ - look at the commits to see just how fast I created this file
+
 ## To Mention
 A few thing that I would like to mention:
  * While writing this, I just realized that `FARM_INNER_HASH` from the two CATs can't be curried in since it changes. It could be provided as an argument, but that would be insecure. Instead, the standard `FARM_MOD_HASH` should be curried alongside static arguments for the game and then the dynamics one should be accepted into the solution. Time's almost up, so I mentioned this here: it's solvable.
