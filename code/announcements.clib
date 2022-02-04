@@ -1,0 +1,10 @@
+(
+    ; SEEDs - farm
+    (defconstant SEED_ANNOUNCE_BURN "seed_burn")
+    (defconstant SEED_ANNOUNCE_MINT "seed_mint")
+    (defconstant FARM_REQUEST_PLANT_BURN "farm_burn_seed_request")
+    (defconstant FARM_REQUEST_PLANT_MINT "farm_mint_seed_request")
+
+    ; SEEDs - BUCKs
+    (defconstant SEED_ANNOUNCE_BURN_FOR_BUCK "seed_burn_to_mint_bucks")
+    (defconstant BUCK_ANNOUNCE_MINT_FOR_SEED "buck_minted")
