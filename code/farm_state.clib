@@ -108,22 +108,89 @@
         )
     )
 
-    ; @desc responsible for updating a new state
+    ; @desc handles the logic for upgrading a farm
+    ; @returns a new state
+    (defun-inline farm_upgrade_logic (state)
+        (if (> 13 farm_state_level) ; max farm level is 13
+            ; payment is being taken care of by farm_upgrade_security
+            (list
+                (+ (farm_state_level state) 1) ; level += 1
+                (+ (* 2 (farm_state_plant_capacity state)) 1) ; plant_capacity = plant_capacity * 2 + 1
+                (* 2 (farm_state_upgrade_cost state)) ; upgrade_cost *= 2
+                (farm_state_plants farm)
+            )
+        ; else
+            (x)
+        )
+    )
+
+    ; @desc handles the logic for harvesting a farm
+    ; @returns a new state
+    (defun-inline farm_harvest_logic (state args)
+        (list
+            (farm_state_level state)
+            (farm_state_plant_capacity state)
+            (farm_state_upgrade_cost state)
+            (get_plants_after_harvest (farm_state_plants farm) (f args))
+        )
+    )
+
+    ; @desc handles the logic for planting seeds in a farm
+    ; @returns a new state
+    (defun-inline farm_plant_logic (state args)
+         (list
+            (farm_state_level state)
+            (farm_state_plant_capacity state)
+            (farm_state_upgrade_cost state)
+            (add_plants_to_list (farm_state_plants farm)
+                (c
+                    (+ (f args) (* 6 HARVEST_TIME)) ; seeds turn into plants after 6 'harvest eras' (~ 6 hours)
+                    (f (r args)) ; number
+                )
+            )
+        )
+    )
+
+    ; @desc handles announcements for upgrading a farm
+    ; @returns list od conditions
+    (defun-inline farm_upgrade_announcements (state cat_things)
+        ; ------------------------------------------------------------------------------------------------------------------------------
+        ; todo: take cost (BUCKs)
+        (x)
+    )
+
+    ; @desc handles announcements for harvesting a farm
+    ; @returns list od conditions
+    (defun-inline farm_harvest_announcements (state args cat_things)
+        ; ------------------------------------------------------------------------------------------------------------------------------
+        ; todo: check current_block and send seeds
+        (x)
+    )
+
+    ; @desc handles announcements for planting seeds in a farm
+    ; @returns list od conditions
+    (defun-inline farm_plant_announcements (state args cat_things)
+        ; ------------------------------------------------------------------------------------------------------------------------------
+        ; todo: check current_block and take seeds
+        (x)
+    )
+
+    ; @desc responsible for updating a new state (logic; everything except announcements)
     ; @param action something from [FARM_UPGRADE, FARM_HARVEST, FARM_PLANT]
     ; @param args atguments for the said action (see farm_actions.clib for format)
     ; @returns a new state
     (defun-inline update_farm_state (state action args cat_things) (
         ; 1. Upgrade
         (if (= action FARM_UPGRADE)
-            () ; todo
+            (farm_upgrade_logic state)
         ; else 
             ; 2. Harvest (get_total_seeds + get_plants_after_harvest)
             (if (= action FARM_HARVEST)
-                (); todo
+                (farm_harvest_logic state args)
             ; else
                 ; 3. Plant seeds
                 (if (= action FARM_PLANT)
-                    (); todo
+                    (farm_plant_logic state args)
                 ; else
                     (x) ; not a valid action
                 )
@@ -131,22 +198,22 @@
         )
     ))
 
-    ; @desc responsible for SECURITY
+    ; @desc responsible for SECURITY (e.g. announcement)
     ; @param action something from [FARM_UPGRADE, FARM_HARVEST, FARM_PLANT]
     ; @param args atguments for the said action (see farm_actions.clib for format)
     ; @returns conditions
     (defun-inline get_state_update_conditions (state action args cat_things) (
         ; 1. Upgrade
         (if (= action FARM_UPGRADE)
-            () ; todo
+            (farm_upgrade_announcements state cat_things)
         ; else 
             ; 2. Harvest (get_total_seeds + get_plants_after_harvest)
             (if (= action FARM_HARVEST)
-                (); todo
+                (farm_harvest_announcements state args cat_things)
             ; else
                 ; 3. Plant seeds
                 (if (= action FARM_PLANT)
-                    (); todo
+                    (farm_plant_announcements state args cat_things)
                 ; else
                     (x) ; not a valid action
                 )
