@@ -36,7 +36,7 @@
                     (sha256 FARM_REQUEST_BUCK_BURN bucks_delta (my_id_cat_truth Truths))
                 )
             )
-            (list CREATE_COIN_ANNOUNCEMENT (sha256 SEED_ANNOUNCE_BURN seeds_delta)) ; can't use addition for obvious reasons
+            (list CREATE_COIN_ANNOUNCEMENT (sha256 BUCK_ANNOUNCE_BURN seeds_delta)) ; can't use addition for obvious reasons
             ; ASSERT_MY_COIN_ID is taken care of by the standard CAT puzzle
         )
     )

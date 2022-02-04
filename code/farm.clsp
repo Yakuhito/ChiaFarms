@@ -1,7 +1,7 @@
 ; this is the inner puzzle for all farm singletons
 ( mod (
         MOD_HASH
-        CAT_THINGS ; see farm_cat_truths.clib
+        CAT_THINGS ; see farm_cat_things.clib
         STATE
         Truths
         action

@@ -9,6 +9,9 @@
 (
     (defconstant HARVEST_TIME 1152) ; 192 = 10 minutes, so 192 * 6 = 1 hour (approx)
     (include farm_actions.clib)
+    (include farm_cat_things.clib)
+    (include announcements.clib)
+    (include condition_codes.clib)
 
     (defun-inline farm_state_level (state) (f state ))
     (defun-inline farm_state_plant_capacity (state) (f (r state)))
@@ -151,28 +154,63 @@
         )
     )
 
+    (defconstant ANNOUNCEMENT_MORPH_BYTE 0xca)
+
     ; @desc handles announcements for upgrading a farm
     ; @returns list od conditions
     (defun-inline farm_upgrade_announcements (state cat_things)
-        ; ------------------------------------------------------------------------------------------------------------------------------
-        ; todo: take cost (BUCKs)
-        (x)
+        ; just destroy BUCKs
+        (list
+            (list CREATE_PUZZLE_ANNOUNCEMENT
+                (sha256 FARM_REQUEST_BUCK_BURN (* -1000 (farm_state_upgrade_cost state)) (buck_coin_id cat_things))
+            ) ; can't use addition for obvious reasons
+            (list ASSERT_COIN_ANNOUNCEMENT (sha256 (buck_coin_id cat_things)
+                ; first sha256 is used to calculate announcementId
+                ; second is used because CATs 'morph' all announcements from TAILs
+                ; third is used to 'pack' announcement data
+                (sha256 ANNOUNCEMENT_MORPH_BYTE (sha256 BUCK_ANNOUNCE_BURN (* -1000 (farm_state_upgrade_cost state))))
+            ))
+        )
     )
 
     ; @desc handles announcements for harvesting a farm
     ; @returns list od conditions
     (defun-inline farm_harvest_announcements (state args cat_things)
-        ; ------------------------------------------------------------------------------------------------------------------------------
-        ; todo: check current_block and send seeds
-        (x)
+        ; check current_block and send SEEDs
+        (list
+            (list ASSERT_HEIGHT_ABSOLUTE (f args))
+            (list CREATE_PUZZLE_ANNOUNCEMENT
+                (sha256 FARM_REQUEST_SEED_MINT
+                    (get_total_seeds (farm_state_plants state) (f args)) (seed_coin_id cat_things)
+                )
+            ) ; can't use addition for obvious reasons
+            (list ASSERT_COIN_ANNOUNCEMENT (sha256 (seed_coin_id cat_things)
+                ; first sha256 is used to calculate announcementId
+                ; second is used because CATs 'morph' all announcements from TAILs
+                ; third is used to 'pack' announcement data
+                (sha256 ANNOUNCEMENT_MORPH_BYTE (sha256 SEED_ANNOUNCE_MINT (get_total_seeds (farm_state_plants state) (f args))))
+            ))
+        )
     )
 
     ; @desc handles announcements for planting seeds in a farm
     ; @returns list od conditions
     (defun-inline farm_plant_announcements (state args cat_things)
-        ; ------------------------------------------------------------------------------------------------------------------------------
-        ; todo: check current_block and take seeds
-        (x)
+        ; check current_block and burn seeds (don't worry - they are actually getting planted)
+        (list
+            (list ASSERT_HEIGHT_ABSOLUTE (f args))
+            (list CREATE_PUZZLE_ANNOUNCEMENT
+                (sha256 FARM_REQUEST_SEED_BURN
+                    (f (r args)) (seed_coin_id cat_things)
+                )
+            ) ; can't use addition for obvious reasons
+            (list ASSERT_COIN_ANNOUNCEMENT (sha256 (seed_coin_id cat_things)
+                ; first sha256 is used to calculate announcementId
+                ; second is used because CATs 'morph' all announcements from TAILs
+                ; third is used to 'pack' announcement data
+                (sha256 ANNOUNCEMENT_MORPH_BYTE (sha256 SEED_ANNOUNCE_BURN (f (r args))))
+            ))
+        )
     )
 
     ; @desc responsible for updating a new state (logic; everything except announcements)
