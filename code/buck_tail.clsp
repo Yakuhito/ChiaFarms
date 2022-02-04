@@ -1,7 +1,7 @@
 ; TAIL for the BUCK token
 ; BUCKs are minted using seeds and can be used to upgrade farms
 
-; Another note: We can compute the SEED token's puzzle hash and curry it in
+; Another note: We can compute the SEED token's puzzle hash and curry in almost all arguments, except inner puzzle hash
 ; A smart thing to do is to let the user give values to seed_coin_amount and seed_coin_parent_id
 ; The puzzle being run is 100% the one for the SEED token since hash collisions are not an issue (yet)
 
@@ -9,19 +9,20 @@
       FARM_MOD_HASH
       FARM_LAUNCHER_PUZZLE_HASH
       FARM_INNER_HASH
-      SEED_PUZZLE_HASH
+      (CAT_MOD_HASH_HASH SEED_TAIL_HASH_HASH) ; second hash should be done using sha256tree, like the first one
       Truths
       parent_is_cat
       lineage_proof
       delta
       inner_conditions
-      (farm_launcher_id bucks_delta seed_coin_amount seed_coin_parent_id)
+      (farm_launcher_id bucks_delta seed_coin_amount seed_coin_parent_id seed_coin_inner_puzzle_hash)
     )
 
     (include farm_puzzle_hash.clib)
     (include condition_codes.clib)
     (include announcements.clib)
     (include cat_truths.clib)
+    (include curry-and-treehash.clinc)
 
     ; @desc returns conditions for burning tokens
     ; @param bucks_delta seeds to burn
@@ -57,12 +58,24 @@
         )
     )
 
+    (defun-inline get_seed_coin_id ()
+        (sha256
+            seed_coin_parent_id
+            (puzzle-hash-of-curried-function CAT_MOD_HASH
+                seed_coin_inner_puzzle_hash ; INNER_PUZZLE (already hashed)
+                SEED_TAIL_HASH_HASH ; TAIL_PROGRAM_HASH
+                CAT_MOD_HASH_HASH ; MOD_HASH
+            )
+            seed_coin_amount
+        )
+    )
+
     ; main
     (if (= delta ()) ; 
         (if (> bucks_delta ())
             (c
                 (ASSERT_MY_AMOUNT bucks_delta)
-                (bucks_mint_conditions bucks_delta (sha256 seed_coin_parent_id SEED_PUZZLE_HASH seed_coin_amount))
+                (bucks_mint_conditions bucks_delta (get_seed_coin_id ()))
             )
          ; else
             (x)

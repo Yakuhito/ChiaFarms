@@ -1,0 +1,102 @@
+; If you're here for farm cat truths: It doesn't really matter if it's a farm cat, a city cat, a space cat, or any other type of cat: it's better than us, all aspects considered. You can call it 'superior' or 'God-like'.
+; If you're here for CAT truths relating to farm.clsp, read below.
+
+; todo: most of these things can be hased before being curried in, thus reducing the program's cost
+
+; Structure:
+; (
+;     (MOD_HASH Truths)
+;     (seed_inner_puzzle buck_inner_puzzle (seed_coin_amount seed_coin_parent_id) (buck_coin_amount buck_coin_parent_id))
+;     ; general CAT info
+;     CAT_MOD_HASH ; mod hash of https://github.com/Chia-Network/chia-blockchain/blob/protocol_and_cats_rebased/chia/wallet/puzzles/cat.clvm
+;     ; SEED CATs
+;     SEED_TAIL_MOD_HASH
+;     SEED_GENESIS_COIN_ID ; used to mint the initial SEEDs
+;     ; FARM_MOD_HASH is the same as MOD_HASH
+;     ; FARM_LAUNCHER_PUZZLE_HASH = (singleton_launcher_puzzle_hash_truth Truths)
+;     ; FARM_INNER_HASH = (my_inner_puzzle_hash_truth Truths)
+;     ; BUCK CATs
+;     BUCK_TAIL_MOD_HASH
+;     ; FARM_MOD_HASH is the same as MOD_HASH
+;     ; FARM_LAUNCHER_PUZZLE_HASH = (singleton_launcher_puzzle_hash_truth Truths)
+;     ; FARM_INNER_HASH = (my_inner_puzzle_hash_truth Truths)
+;     ; SEED_PUZZLE_HASH can be easily computed from the info above
+; )
+
+; Note/WARNING: cat_truths are called truths not because they are verified, but because a malicious party would gain nothing by playingwith the dynamic fields
+
+(
+    (defun-inline mod_hash_from_cat_truths (cat_truths) (f (r (f cat_truths))))
+    (defun-inline truths_from_cat_truths (cat_truths) (f (f cat_truths)))
+
+    (defun-inline seed_inner_puzzle_hash_from_cat_truths (cat_truths) (f (f (r cat_truths))))
+    (defun-inline buck_inner_puzzle_hash_from_cat_truths (cat_truths) (f (r (f (r cat_truths)))))
+
+    (defun-inline seed_coin_info_from_cat_truths (cat_truths) (f (r (r (f (r cat_truths)))))) ; (seed_coin_amount seed_coin_parent_id)
+    (defun-inline buck_coin_info_from_cat_truths (cat_truths) (f (r (r (r (f (r cat_truths))))))) ; (buck_coin_amount buck_coin_parent_id)
+
+    (defun-inline cat_mod_hash_from_cat_truths (cat_truths) (f (r (r cat_truths))))
+    (defun-inline seed_tail_mod_hash_from_cat_truths (cat_truths) (f (r (r (r cat_truths)))))
+    (defun-inline seed_genesis_coin_id_from_cat_truths (cat_truths) (f (r (r (r (r cat_truths))))))
+    (defun-inline buck_tail_mod_hash_from_cat_truths (cat_truths) (f (r (r (r (r (r cat_truths)))))))
+    
+
+    (include curry-and-treehash.clinc)
+
+    (defun sha256tree (TREE)
+        (if (l TREE)
+            (sha256 2 (sha256tree (f TREE)) (sha256tree (r TREE)))
+            (sha256 1 TREE)
+        )
+    )
+
+    (defun-inline seed_tail_puzzle_hash (cat_truths)
+        (puzzle-hash-of-curried-function (seed_tail_mod_hash_from_cat_truths cat_truths)
+            (sha256tree (my_inner_puzzle_hash_truth (truths_from_cat_truths cat_truths))) ; FARM_INNER_HASH
+            (sha256tree (singleton_launcher_puzzle_hash_truth (truths_from_cat_truths cat_truths))) ; FARM_LAUNCHER_PUZZLE_HASH
+            (sha256tree (mod_hash_from_cat_truths cat_truths)) ; FARM_MOD_HASH
+            (sha256tree (seed_genesis_coin_id_from_cat_truths cat_truths)) ; GENESIS_COIN_ID
+        )
+    )
+
+    (defun-inline seed_puzzle_hash (cat_truths)
+        (puzzle-hash-of-curried-function (cat_mod_hash_from_cat_truths cat_truths)
+            (seed_inner_puzzle_hash_from_cat_truths cat_truths) ; INNER_PUZZLE (already hashed)
+            (sha256tree (seed_tail_puzzle_hash cat_truths)) ; TAIL_PROGRAM_HASH
+            (sha256tree (seed_tail_mod_hash_from_cat_truths cat_truths)) ; MOD_HASH
+        )
+    )
+
+    (defun-inline seed_coin_id (cat_truths)
+        (sha256
+            (f (r (seed_coin_info_from_cat_truths cat_truths))) ; parent id
+            (seed_puzzle_hash cat_truths); puzzle hash
+            ((f (seed_coin_info_from_cat_truths cat_truths))) ; amount
+        )
+    )
+      
+    (defun-inline buck_tail_puzzle_hash (cat_truths)
+        (puzzle-hash-of-curried-function (seed_tail_mod_hash_from_cat_truths cat_truths)
+            (sha256tree (seed_puzzle_hash cat_truths)); SEED_PUZZLE_HASH
+            (sha256tree (my_inner_puzzle_hash_truth (truths_from_cat_truths cat_truths))) ; FARM_INNER_HASH
+            (sha256tree (singleton_launcher_puzzle_hash_truth (truths_from_cat_truths cat_truths))) ; FARM_LAUNCHER_PUZZLE_HASH
+            (sha256tree (mod_hash_from_cat_truths cat_truths)) ; FARM_MOD_HASH
+        )
+    )
+
+    (defun-inline buck_puzzle_hash (cat_truths)
+        (puzzle-hash-of-curried-function (cat_mod_hash_from_cat_truths cat_truths)
+            (buck_inner_puzzle_hash_from_cat_truths cat_truths) ; INNER_PUZZLE (already hashed)
+            (sha256tree (buck_tail_puzzle_hash cat_truths)) ; TAIL_PROGRAM_HASH
+            (sha256tree (buck_tail_mod_hash_from_cat_truths cat_truths)) ; MOD_HASH
+        )
+    )
+
+    (defun-inline buck_coin_id (cat_truths)
+        (sha256
+            (f (r (buck_coin_info_from_cat_truths cat_truths))) ; parent id
+            (buck_puzzle_hash cat_truths); puzzle hash
+            ((f (buck_coin_info_from_cat_truths cat_truths))) ; amount
+        )
+    )
+)

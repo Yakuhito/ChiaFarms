@@ -1,0 +1,6 @@
+(
+    (defconstant FARM_UPGRADE "upgrade") ; args = ()
+    (defconstant FARM_HARVEST "harvest") ; args = (current_block)
+    (defconstant FARM_PLANT "plant") ; args = (current_block seeds_to_plant)
+    
+)

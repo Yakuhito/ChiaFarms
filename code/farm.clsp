@@ -1,1 +1,71 @@
 ; this is the inner puzzle for all farm singletons
+( mod (
+        MOD_HASH
+        CAT_THINGS ; see farm_cat_truths.clib
+        STATE
+        Truths
+        action
+        args
+        dynamic_cat_things
+    )
+
+    (include farm_state.clib)
+    (include singleton_truths.clib)
+    (include utility_macros.clib)
+    (include curry-and-treehash.clinc)
+
+    (defun sha256tree (TREE)
+        (if (l TREE)
+            (sha256 2 (sha256tree (f TREE)) (sha256tree (r TREE)))
+            (sha256 1 TREE)
+        )
+    )
+
+    ; @returns the new puzzle hash of the coin
+    (defun-inline get_new_puzhash (new_state) 
+        (puzzle-hash-of-curried-function MOD_HASH
+            (sha256tree new_state) ; STATE
+            (sha256tree (list CAT_MOD_HASH CAT_INNER_PUZZLE_HASH SEED_TAIL_MOD_HASH SEED_GENESIS_COIN_ID BUCK_TAIL_MOD_HASH))
+            (sha256tree MOD_HASH) ; MOD_HASH
+        )
+    )
+
+    ; @returns the conditions that should be returned by the coin
+    (defun-inline output_conditions (action args)
+        (list
+            (list CREATE_COIN (get_new_puzhash (update_farm_state action args)) 1)
+            (get_state_update_conditions actions args)
+        )
+    )
+
+    ; @desc checks initial state: level = 0, capacity = 0, cost_to_upgrade = 10, plants = ()
+    ; @param state the state to check
+    ; @returns true if everything is ok, exception otherwise
+    (defun-inline check_initial_state (state)
+        (assert (list
+            (= (f state) ())
+            (= (f (r state)) ())
+            (= (f (r (r state))) 10)
+            (= (f (r (r (r state)))) ())
+        ))
+    )
+
+    ; @returns cat_truths, which is used mainly in farm_cat_truths.clvm
+    (defun-inline generate_cat_truths (cat_things dynamic_cat_things)
+        (list
+            (c MOD_HASH Truths)
+            dynamic_cat_things
+            CAT_THINGS
+        )
+    )
+
+    ; main
+    (if (= (parent_info_for_lineage_proof (my_lineage_proof_truth Truths)) (singleton_launcher_id_truth Truth)) ; parent is launcher; verify STATE
+        (if (check_initial_state STATE))
+            (output_conditions action args (generate_cat_truths cat_things dynamic_cat_things)
+        ; else
+            (x) ; not a valid initial state; this coin will never be spent
+    ; else
+        (output_conditions action args (generate_cat_truths cat_things dynamic_cat_things))
+    )
+)

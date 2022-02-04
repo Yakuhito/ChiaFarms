@@ -7,6 +7,9 @@
 ;        0: last_harvest_block
 ;        1: number
 (
+    (defconstant HARVEST_TIME 1152) ; 192 = 10 minutes, so 192 * 6 = 1 hour (approx)
+    (include farm_actions.clib)
+
     (defun-inline farm_state_level (state) (f state ))
     (defun-inline farm_state_plant_capacity (state) (f (r state)))
     (defun-inline farm_state_upgrade_cost (state) (f (r (r state))))
@@ -36,8 +39,6 @@
             plants_to_add; state_plants is empty; append plants_to_add at the end
         )
     )
-
-    (defconstant HARVEST_TIME 1152) ; 192 = 10 minutes, so 192 * 6 = 1 hour (approx)
 
     ; @desc computes the number of times a plant should be harvested
     ;       e.g. if a plant makes seeds every 2 hours and 10 hours have passed, this function should return 5
@@ -108,11 +109,48 @@
     )
 
     ; @desc responsible for updating a new state
-    (defun-inline update_farm_state (state current_block plants_to_add) (
-        ; 1. Upgrade?
-        ; 2. Harvest
-        ; 3. Add plants
-        ; 4. Add seeds
-        ; 4. Remove plants (DO NOT ALLOW 'NOT GROWN' PLANTS)
+    ; @param action something from [FARM_UPGRADE, FARM_HARVEST, FARM_PLANT]
+    ; @param args atguments for the said action (see farm_actions.clib for format)
+    ; @returns a new state
+    (defun-inline update_farm_state (state action args cat_things) (
+        ; 1. Upgrade
+        (if (= action FARM_UPGRADE)
+            () ; todo
+        ; else 
+            ; 2. Harvest (get_total_seeds + get_plants_after_harvest)
+            (if (= action FARM_HARVEST)
+                (); todo
+            ; else
+                ; 3. Plant seeds
+                (if (= action FARM_PLANT)
+                    (); todo
+                ; else
+                    (x) ; not a valid action
+                )
+            )
+        )
+    ))
+
+    ; @desc responsible for SECURITY
+    ; @param action something from [FARM_UPGRADE, FARM_HARVEST, FARM_PLANT]
+    ; @param args atguments for the said action (see farm_actions.clib for format)
+    ; @returns conditions
+    (defun-inline get_state_update_conditions (state action args cat_things) (
+        ; 1. Upgrade
+        (if (= action FARM_UPGRADE)
+            () ; todo
+        ; else 
+            ; 2. Harvest (get_total_seeds + get_plants_after_harvest)
+            (if (= action FARM_HARVEST)
+                (); todo
+            ; else
+                ; 3. Plant seeds
+                (if (= action FARM_PLANT)
+                    (); todo
+                ; else
+                    (x) ; not a valid action
+                )
+            )
+        )
     ))
 )
