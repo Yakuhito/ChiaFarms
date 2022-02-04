@@ -1,0 +1,32 @@
+(
+    (include curry-and-treehash.clib)
+
+    (defun sha256tree (TREE)
+        (if (l TREE)
+            (sha256 2 (sha256tree (f TREE)) (sha256tree (r TREE)))
+            (sha256 1 TREE)
+        )
+    )
+
+     ; ;; SINGLETON_STRUCT = (MOD_HASH . (LAUNCHER_ID . LAUNCHER_PUZZLE_HASH))
+    (defun-inline mod_hash_for_singleton_struct (SINGLETON_STRUCT) (f SINGLETON_STRUCT))
+    (defun-inline calculate_full_puzzle_hash (SINGLETON_STRUCT inner_puzzle_hash)
+        (puzzle-hash-of-curried-function (mod_hash_for_singleton_struct SINGLETON_STRUCT)
+                                      inner_puzzle_hash
+                                      (sha256tree SINGLETON_STRUCT)
+        )
+    )
+
+    ; @desc helper function for calculating a farm's puzzle hash (needed for announcements)
+    ; @param mod_hash the singleton's MOD_HASH
+    ; @param launcher_id the singleton's LAUNCHER_ID
+    ; @param launcher_puzzle_hash the singleton's LAUNCHER_PUZZLE_HASH
+    ; @param inner_puzzle_hash the singleton's INNER_PUZZLE hash
+    ; @returns puzzle hash of the farm singleton having the given params
+    (defun-inline get_farm_puzzle_hash (mod_hash launcher_id launcher_puzzle_hash inner_puzzle_hash)
+        (calculate_full_puzzle_hash
+            (c mod_hash (c launcher_id launcher_puzzle_hash))
+            inner_puzzle_hash
+        )
+    )
+)

@@ -1,0 +1,6 @@
+(
+    (defconstant PLANT_ANNOUNCE_BURN "plant_burn")
+    (defconstant PLANT_ANNOUNCE_MINT "plant_mint")
+    (defconstant FARM_REQUEST_PLANT_BURN "farm_burn_plant_request")
+    (defconstant FARM_REQUEST_PLANT_MINT "farm_mint_plant_request")
+)

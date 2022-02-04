@@ -1,0 +1,58 @@
+; TAIL for the PLANT token
+; PLANTs are grown plants that start producing seeds immediately after being included in your farm
+
+(mod (
+      FARM_MOD_HASH
+      FARM_LAUNCHER_PUZZLE_HASH
+      FARM_INNER_HASH
+      Truths
+      parent_is_cat
+      lineage_proof
+      delta
+      inner_conditions
+      (farm_launcher_id plants_to_create my_id)
+    )
+
+    (include farm_puzzle_hash.clib)
+    (include condition_codes.clib)
+    (include announcements_plant.clib)
+
+    (if (= delta 0)
+        ()
+    ; else
+        (if (> delta 0)
+            (if (= delta (* 1000 plants_to_create))
+                (list
+                    (list
+                        ASSERT_PUZZLE_ANNOUNCEMENT
+                        (sha256
+                            (get_farm_puzzle_hash FARM_MOD_HASH farm_launcher_id FARM_LAUNCHER_PUZZLE_HASH FARM_INNER_HASH)
+                            (sha256 FARM_REQUEST_PLANT_MINT plants_to_create)
+                        )
+                    )
+                    (list CREATE_COIN_ANNOUNCEMENT (sha256 PLANT_ANNOUNCE_MINT plants_to_create)) ; can'tuse addition  for obvious reasons
+                    (list ASSERT_MY_COIN_ID my_id)
+                )
+            ; else
+                (x)
+            )
+        ; else
+            (if (= delta (* -1000 plants_to_create))
+                (list
+                    (list
+                        ASSERT_PUZZLE_ANNOUNCEMENT
+                        (sha256
+                            (get_farm_puzzle_hash FARM_MOD_HASH farm_launcher_id FARM_LAUNCHER_PUZZLE_HASH FARM_INNER_HASH)
+                            (sha256 FARM_REQUEST_PLANT_BURN plants_to_create)
+                        )
+                    )
+                    (list CREATE_COIN_ANNOUNCEMENT (sha256 PLANT_ANNOUNCE_BURN plants_to_create)) ; can'tuse addition  for obvious reasons
+                    (list ASSERT_MY_COIN_ID my_id)
+                )
+            ; else
+                () ; allow melting
+            )
+        )
+    )
+
+)
