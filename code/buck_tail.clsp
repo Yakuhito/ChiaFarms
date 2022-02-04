@@ -1,16 +1,21 @@
 ; TAIL for the BUCK token
 ; BUCKs are minted using seeds and can be used to upgrade farms
 
+; Another note: We can compute the SEED token's puzzle hash and curry it in
+; A smart thing to do is to let the user give values to seed_coin_amount and seed_coin_parent_id
+; The puzzle being run is 100% the one for the SEED token since hash collisions are not an issue (yet)
+
 (mod (
       FARM_MOD_HASH
       FARM_LAUNCHER_PUZZLE_HASH
       FARM_INNER_HASH
+      SEED_PUZZLE_HASH
       Truths
       parent_is_cat
       lineage_proof
       delta
       inner_conditions
-      (farm_launcher_id bucks_delta)
+      (farm_launcher_id bucks_delta seed_coin_amount seed_coin_parent_id)
     )
 
     (include farm_puzzle_hash.clib)
@@ -57,7 +62,7 @@
         (if (> bucks_delta ())
             (c
                 (ASSERT_MY_AMOUNT bucks_delta)
-                (bucks_mint_conditions bucks_delta seed_coin_id) ; -------------------------------------------- HIARA SIR
+                (bucks_mint_conditions bucks_delta (sha256 seed_coin_parent_id SEED_PUZZLE_HASH seed_coin_amount))
             )
          ; else
             (x)
