@@ -40,7 +40,7 @@ Farms are Singletons and have owners. BUCKs and SEEDs are both CATs and can be t
 
 ## To Mention
 A few thing that I would like to mention:
-    * While writing this, I just realized that `FARM_INNER_HASH` from the two CATs can't be curried in since it changes. It could be provided as an argument, but that would be insecure. Instead, the standard `FARM_MOD_HASH` should be curried alongside static arguments for the game and then the dynamics one should be accepted into the solution. Time's almost up, so I mentioned this here: it's solvable.
-    * The code has not been tested. My experience tells me that it contains a lot of errors. I consider it to be a 'draft' from which I could start building out the real project (I probably won't)
-    * Finding resources about testing code using Python was pretty hard. I settled on the nft companion app from xch.gallery, but I didn't get the chance to write my own tests. Just a suggestions.
-    * Last thing: thanks! I feel like I learned a lot in the last ~14 hours and the challenge really motivated me to push myself and learn a lot more (I have to admit that I fell a little bit behind after CATs were released). Clovyr, you rock. Chia, you will soon be the definition what 'to rock' means.
+ * While writing this, I just realized that `FARM_INNER_HASH` from the two CATs can't be curried in since it changes. It could be provided as an argument, but that would be insecure. Instead, the standard `FARM_MOD_HASH` should be curried alongside static arguments for the game and then the dynamics one should be accepted into the solution. Time's almost up, so I mentioned this here: it's solvable.
+ * The code has not been tested. My experience tells me that it contains a lot of errors. I consider it to be a 'draft' from which I could start building out the real project (I probably won't)
+ * Finding resources about testing code using Python was pretty hard. I settled on the nft companion app from xch.gallery, but I didn't get the chance to write my own tests. Just a suggestions.
+ * Last thing: thanks! I feel like I learned a lot in the last ~14 hours and the challenge really motivated me to push myself and learn a lot more (I have to admit that I fell a little bit behind after CATs were released). Clovyr, you rock. Chia, you will soon be the definition what 'to rock' means.
