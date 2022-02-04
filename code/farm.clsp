@@ -3,6 +3,7 @@
         MOD_HASH
         CAT_THINGS ; see farm_cat_things.clib
         STATE
+        OWNER_PUBKEY
         Truths
         action
         args
@@ -13,6 +14,7 @@
     (include singleton_truths.clib)
     (include utility_macros.clib)
     (include curry-and-treehash.clinc)
+    (include announcements.clib)
 
     (defun sha256tree (TREE)
         (if (l TREE)
@@ -22,19 +24,27 @@
     )
 
     ; @returns the new puzzle hash of the coin
-    (defun-inline get_new_puzhash (new_state) 
+    (defun-inline get_new_puzhash (new_state new_owner) 
         (puzzle-hash-of-curried-function MOD_HASH
+            (sha256tree new_owner) ; OWNER_PUBKEY
             (sha256tree new_state) ; STATE
-            (sha256tree (list CAT_MOD_HASH CAT_INNER_PUZZLE_HASH SEED_TAIL_MOD_HASH SEED_GENESIS_COIN_ID BUCK_TAIL_MOD_HASH))
+            (sha256tree CAT_THINGS) ; CAT_THINGS
             (sha256tree MOD_HASH) ; MOD_HASH
         )
     )
 
     ; @returns the conditions that should be returned by the coin
     (defun-inline output_conditions (action args)
-        (list
-            (list CREATE_COIN (get_new_puzhash (update_farm_state action args)) 1)
-            (get_state_update_conditions actions args)
+        (if (= action FARM_TRANSFER)
+            (list
+                (list CREATE_COIN (get_new_puzhash (update_farm_state action args) (f args)) 1)
+                (get_state_update_conditions actions args)
+            )
+        ; else
+            (list
+                (list CREATE_COIN (get_new_puzhash (update_farm_state action args) OWNER_PUBKEY) 1)
+                (get_state_update_conditions actions args)
+            )
         )
     )
 
@@ -62,10 +72,10 @@
     ; main
     (if (= (parent_info_for_lineage_proof (my_lineage_proof_truth Truths)) (singleton_launcher_id_truth Truth)) ; parent is launcher; verify STATE
         (if (check_initial_state STATE))
-            (output_conditions action args (generate_cat_truths cat_things dynamic_cat_things)
+            (output_conditions action args (generate_cat_truths cat_things dynamic_cat_things) OWNER_PUBKEY)
         ; else
             (x) ; not a valid initial state; this coin will never be spent
     ; else
-        (output_conditions action args (generate_cat_truths cat_things dynamic_cat_things))
+        (output_conditions action args (generate_cat_truths cat_things dynamic_cat_things) OWNER_PUBKEY)
     )
 )

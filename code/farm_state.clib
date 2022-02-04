@@ -175,8 +175,8 @@
 
     ; @desc handles announcements for harvesting a farm
     ; @returns list od conditions
-    (defun-inline farm_harvest_announcements (state args cat_things)
-        ; check current_block and send SEEDs
+    (defun-inline farm_harvest_announcements (state args cat_things owner_pubkey)
+        ; check current_block and send SEEDs + sig
         (list
             (list ASSERT_HEIGHT_ABSOLUTE (f args))
             (list CREATE_PUZZLE_ANNOUNCEMENT
@@ -190,13 +190,14 @@
                 ; third is used to 'pack' announcement data
                 (sha256 ANNOUNCEMENT_MORPH_BYTE (sha256 SEED_ANNOUNCE_MINT (get_total_seeds (farm_state_plants state) (f args))))
             ))
+            (list AGG_SIG_ME owner_pubkey (sha256 args))
         )
     )
 
     ; @desc handles announcements for planting seeds in a farm
     ; @returns list od conditions
-    (defun-inline farm_plant_announcements (state args cat_things)
-        ; check current_block and burn seeds (don't worry - they are actually getting planted)
+    (defun-inline farm_plant_announcements (state args cat_things owner_pubkey)
+        ; check current_block and burn seeds (don't worry - they are actually getting planted) + sig
         (list
             (list ASSERT_HEIGHT_ABSOLUTE (f args))
             (list CREATE_PUZZLE_ANNOUNCEMENT
@@ -210,6 +211,16 @@
                 ; third is used to 'pack' announcement data
                 (sha256 ANNOUNCEMENT_MORPH_BYTE (sha256 SEED_ANNOUNCE_BURN (f (r args))))
             ))
+            (list AGG_SIG_ME owner_pubkey (sha256 args))
+        )
+    )
+
+    ; @desc handles announcements for transfering a farm to a new owner
+    ; @returns list od conditions
+    (defun-inline farm_transfer_announcements (state args cat_things owner_pubkey)
+        ; check sig
+        (list
+            (list AGG_SIG_ME owner_pubkey (sha256 args))
         )
     )
 
@@ -230,7 +241,7 @@
                 (if (= action FARM_PLANT)
                     (farm_plant_logic state args)
                 ; else
-                    (x) ; not a valid action
+                    state ; transfer or invalid action
                 )
             )
         )
@@ -240,20 +251,24 @@
     ; @param action something from [FARM_UPGRADE, FARM_HARVEST, FARM_PLANT]
     ; @param args atguments for the said action (see farm_actions.clib for format)
     ; @returns conditions
-    (defun-inline get_state_update_conditions (state action args cat_things) (
+    (defun-inline get_state_update_conditions (state action args cat_things owner_pubkey) (
         ; 1. Upgrade
         (if (= action FARM_UPGRADE)
-            (farm_upgrade_announcements state cat_things)
+            (farm_upgrade_announcements state) ; anyone can upgrade farms
         ; else 
             ; 2. Harvest (get_total_seeds + get_plants_after_harvest)
             (if (= action FARM_HARVEST)
-                (farm_harvest_announcements state args cat_things)
+                (farm_harvest_announcements state args cat_things owner_pubkey)
             ; else
                 ; 3. Plant seeds
                 (if (= action FARM_PLANT)
-                    (farm_plant_announcements state args cat_things)
+                    (farm_plant_announcements state args cat_things owner_pubkey)
                 ; else
-                    (x) ; not a valid action
+                    (if (= action FARM_TRANSFER)
+                        (farm_transfer_announcements state args cat_things owner_pubkey)
+                    ; else
+                        (x) ; unknown action
+                    )
                 )
             )
         )
