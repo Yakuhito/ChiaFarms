@@ -8,3 +8,9 @@
     ; SEEDs - BUCKs
     (defconstant SEED_ANNOUNCE_BURN_FOR_BUCK "seed_burn_to_mint_bucks")
     (defconstant BUCK_ANNOUNCE_MINT_FOR_SEED "buck_minted")
+
+    ; BUCKs - farm
+    (defconstant BUCK_ANNOUNCE_BURN "buck_burn")
+    (defconstant FARM_REQUEST_BUCK_BURN "farm_burn_buck_request")
+
+)

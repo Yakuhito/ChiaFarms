@@ -1,0 +1,83 @@
+; TAIL for the BUCK token
+; BUCKs are minted using seeds and can be used to upgrade farms
+
+(mod (
+      FARM_MOD_HASH
+      FARM_LAUNCHER_PUZZLE_HASH
+      FARM_INNER_HASH
+      Truths
+      parent_is_cat
+      lineage_proof
+      delta
+      inner_conditions
+      (farm_launcher_id bucks_delta)
+    )
+
+    (include farm_puzzle_hash.clib)
+    (include condition_codes.clib)
+    (include announcements.clib)
+    (include cat_truths.clib)
+
+    ; @desc returns conditions for burning tokens
+    ; @param bucks_delta seeds to burn
+    ; @returns a list of conditions
+    (defun-inline farm_burn_conditions (bucks_delta)
+        (list
+            (list
+                ASSERT_PUZZLE_ANNOUNCEMENT
+                (sha256
+                    (get_farm_puzzle_hash FARM_MOD_HASH farm_launcher_id FARM_LAUNCHER_PUZZLE_HASH FARM_INNER_HASH)
+                    (sha256 FARM_REQUEST_BUCK_BURN bucks_delta (my_id_cat_truth Truths))
+                )
+            )
+            (list CREATE_COIN_ANNOUNCEMENT (sha256 SEED_ANNOUNCE_BURN seeds_delta)) ; can't use addition for obvious reasons
+            ; ASSERT_MY_COIN_ID is taken care of by the standard CAT puzzle
+        )
+    )
+
+    (defconstant ANNOUNCEMENT_MORPH_BYTE 0xca)
+
+    ; @desc returns conditions for minting new tokens (from burned seeds)
+    ; @param delta tokens to mint (mojos)
+    ; @returns a list of conditions
+    (defun-inline bucks_mint_conditions (delta seed_coin_id)
+        (list
+            (list CREATE_COIN_ANNOUNCEMENT (sha256 BUCK_ANNOUNCE_MINT_FOR_SEED delta seed_coin_id)) ; can't use addition for obvious reasons
+            (list ASSERT_COIN_ANNOUNCEMENT (sha256 seed_coin_id
+                ; first sha256 is used to calculate announcementId
+                ; second is used because CATs 'morph' all announcements from TAILs
+                ; third is used to 'pack' announcement data
+                (sha256 ANNOUNCEMENT_MORPH_BYTE (sha256 SEED_ANNOUNCE_BURN_FOR_BUCK delta (my_id_cat_truth Truths)))
+            ))
+        )
+    )
+
+    ; main
+    (if (= delta ()) ; 
+        (if (> bucks_delta ())
+            (c
+                (ASSERT_MY_AMOUNT bucks_delta)
+                (bucks_mint_conditions bucks_delta seed_coin_id) ; -------------------------------------------- HIARA SIR
+            )
+         ; else
+            (x)
+    ; else
+        (if (= bucks_delta ())
+            (if (> () delta) ; delta < 0
+                () ; allow melting
+            ; else
+                (x)
+            )
+        ; else
+            (if (= delta bucks_delta)
+                (if (> bucks_delta ())
+                    (bucks_mint_conditions bucks_delta)
+                ; else
+                    (x)
+                )
+            ; else
+                (x)
+            )
+        )
+    )
+)
