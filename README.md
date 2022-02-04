@@ -46,6 +46,7 @@ Interesting things that happen in the code:
  - look at the commits to see just how fast I created this file
  - BUCKs and SEEDs can be changed 1:1
  - I knew you could have a puzzle that works with its own hash, but I never imagined that you could have a puzzle that works with another coin based on a puzzle that had the hash of the first puzzle curried in. Phew, that was hard to type!
+ - for each action that could update a farm's state, two functions from `farm_state.clib` are caled. One handles the state update and the checks that can be done without generating output conditions, and the other one generates all required output conditions for the action to be valid.
 
 ## To Mention
 A few thing that I would like to mention:
